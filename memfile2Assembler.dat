@@ -1,0 +1,27 @@
+
+	sub r0, pc, pc			E04F000F
+	add r1, r0, #5			E2801005
+	add r2, r0, #0xE		E280200E
+	sub r3, r2, #9			E2423009
+	cmp r2, r3			E1520003
+	addgt r4, r3, #0x40		C2834040
+	adds r5, r0, r3, lsl #2		E0905103
+	add r6, r0, r5, lsr #2		E0806125
+	cmp r6, r3			E1560003
+	subeq r7, r5, r5, lsl #4	00457205
+	add r8, r0, r7, asr #1		E08080C7
+
+	str r8, [r5, #10]		E585800A
+	str r8, [r5, #0x20]		E585800A
+	ldr r9, [r5, #10]		E595900A
+	ldrb r10, [r5, #0x20]		E5D5A020
+
+	cmp r10, r9			E15A0009
+	eorgt r11, r10, r9		C02AB009
+	eor r12, r1,r2			E021C002
+
+	add r2, r0, #0x7		E2802007
+	str r2, [r0, #0x64]		E5802064
+
+
+
