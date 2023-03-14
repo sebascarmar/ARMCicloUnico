@@ -175,7 +175,7 @@ module arm(input  logic        clk, reset,
 endmodule
 
 module controller(input  logic         clk, reset,
-	              input  logic [31:12] Instr,
+	          input  logic [31:12] Instr,
                   input  logic [3:0]   ALUFlags,
                   output logic [1:0]   RegSrc,
                   output logic         RegWrite,
@@ -187,7 +187,7 @@ module controller(input  logic         clk, reset,
 
   logic [1:0] 	FlagW;
   logic      	PCS, RegW, MemW;
-  logic			NoWrite;
+  logic	        NoWrite;
   
   decode dec(Instr[27:26], Instr[25:20], Instr[15:12],
              FlagW, PCS, RegW, MemW,
@@ -204,9 +204,9 @@ module decode(input  logic [1:0] Op,
               output logic       PCS, RegW, MemW,
               output logic       MemtoReg, ALUSrc,
               output logic [1:0] ImmSrc, RegSrc,
-				  output logic [2:0]ALUControl,
-				  output logic NoWrite	//variable que agragamos para el CMP
-				  );
+              logic        [2:0] ALUControl,
+              logic              NoWrite	//variable que agragamos para el CMP
+);
 
   logic [9:0] controls;
   logic       Branch, ALUOp;
@@ -214,52 +214,62 @@ module decode(input  logic [1:0] Op,
   // Main Decoder
   
   always_comb
-  	casex(Op)
-  	                        // Data processing immediate
-  	  2'b00: if (Funct[5])  controls = 10'b0000101001; 
-  	                        // Data processing register
-  	         else           controls = 10'b0000001001; 
-  	                        // LDR
-  	  2'b01: if (Funct[0])  controls = 10'b0001111000; 
-  	                        // STR
-  	         else           controls = 10'b1001110100; 
-  	                        // B
-  	  2'b10:                controls = 10'b0110100010; 
-  	                        // Unimplemented
-  	  default:              controls = 10'bx;          
-  	endcase
+    casex(Op)
+      
+      2'b00:
+        if (Funct[5]) // Data processing immediate
+          controls = 10'b0000101001; 
+        else         // Data processing register
+          controls = 10'b0000001001; 
+      
+      2'b01:
+        if (Funct[0]) // LDR
+          controls = 10'b0001111000; 
+        else          // STR
+          controls = 10'b1001110100; 
+     
+      2'b10: // B
+        controls = 10'b0110100010; 
+     
+      default: // Unimplemented
+        controls = 10'bx;          
+     
+    endcase
 
   assign {RegSrc, ImmSrc, ALUSrc, MemtoReg, 
           RegW, MemW, Branch, ALUOp} = controls; 
-          
+
   // ALU Decoder             
   always_comb
-    if (ALUOp) begin                 // which DP Instr?
+    if (ALUOp)
+    begin                 // which DP Instr?
       case(Funct[4:1]) 
-  	    4'b0100: ALUControl = 3'b000; // ADD
-  	    4'b0010: ALUControl = 3'b001; // SUB
-       4'b0000: ALUControl = 3'b010; // AND
-  	    4'b1100: ALUControl = 3'b011; // ORR
-		 4'b1010: ALUControl = 3'b001; // CMP (SUB)
-		 4'b0001: ALUControl = 3'b100; // EOR
-  	    default: ALUControl = 3'bx;  // unimplemented
+        4'b0100: ALUControl = 3'b000; // ADD
+        4'b0010: ALUControl = 3'b001; // SUB
+        4'b0000: ALUControl = 3'b010; // AND
+        4'b1100: ALUControl = 3'b011; // ORR
+        4'b1010: ALUControl = 3'b001; // CMP (SUB)
+        4'b0001: ALUControl = 3'b100; // EOR
+        default: ALUControl = 3'bx;   // unimplemented
       endcase
-		
+      		
       // update flags if S bit is set 
-	// (C & V only updated for arith instructions)
-      FlagW[1]      = Funct[0]; // FlagW[1] = S-bit
-	// FlagW[0] = S-bit & (ADD | SUB)
-      FlagW[0]      = Funct[0] & (ALUControl == 3'b000 | ALUControl == 3'b001); 
-    end else begin
+      // (C & V only updated for arith instructions)
+      FlagW[1] = Funct[0]; // FlagW[1] = S-bit
+      // FlagW[0] = S-bit & (ADD | SUB)
+      FlagW[0] = Funct[0] & (ALUControl == 3'b000 | ALUControl == 3'b001); 
+    end
+    else
+    begin
       ALUControl = 3'b000; // add for non-DP instructions
       FlagW      = 2'b00; // don't update Flags
     end
 	
-	//Salida NoWrite
-	assign NoWrite = Funct[4:1] == 4'b1010 ? 1 : 0;
-	              
+  //Salida NoWrite
+  assign NoWrite = Funct[4:1] == 4'b1010 ? 1 : 0;
+
   // PC Logic
-  assign PCS  = ((Rd == 4'b1111) & RegW) | Branch; 
+  assign    PCS  = ((Rd == 4'b1111) & RegW) | Branch; 
 endmodule
 
 module condlogic(input  logic       clk, reset,
@@ -267,9 +277,9 @@ module condlogic(input  logic       clk, reset,
                  input  logic [3:0] ALUFlags,
                  input  logic [1:0] FlagW,
                  input  logic       PCS, RegW, MemW,
-					  input	logic 		NoWrite,
+                 input	logic       NoWrite,
                  output logic       PCSrc, RegWrite, MemWrite);
-                 
+
   logic [1:0] FlagWrite;
   logic [3:0] Flags;
   logic       CondEx;
